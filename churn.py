@@ -25,9 +25,12 @@ st.title("Customer Churn Prediction")
 # Drop customerID column
 df.drop(columns=['customerID'], inplace=True, errors='ignore')
 
-# Convert TotalCharges to numeric
+# Convert TotalCharges to numeric (fixes conversion errors)
 df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
-df.fillna(df.median(), inplace=True)
+
+# Fill missing values - apply median only to numeric columns
+df.fillna(df.select_dtypes(include=['number']).median(), inplace=True)
+
 
 # Encode categorical variables
 le = LabelEncoder()
