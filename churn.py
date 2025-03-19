@@ -25,12 +25,11 @@ st.title("Customer Churn Prediction")
 # Drop customerID column
 df.drop(columns=['customerID'], inplace=True, errors='ignore')
 
-# Convert TotalCharges to numeric (fixes conversion errors)
+# Convert TotalCharges to numeric
 df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
 
 # Fill missing values - apply median only to numeric columns
 df.fillna(df.select_dtypes(include=['number']).median(), inplace=True)
-
 
 # Encode categorical variables
 le = LabelEncoder()
@@ -41,6 +40,9 @@ for col in df.select_dtypes(include=['object']).columns:
 X = df.drop(columns=['Churn'])
 y = df['Churn']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Convert X_test back to DataFrame to avoid SHAP errors
+X_test = pd.DataFrame(X_test, columns=X.columns)
 
 # Scale features
 scaler = StandardScaler()
@@ -72,9 +74,10 @@ st.subheader("Feature Importance using SHAP")
 shap_explainer = shap.TreeExplainer(trained_models["XGBoost"])
 shap_values = shap_explainer.shap_values(X_test)
 
-plt.figure(figsize=(10, 6))
-shap.summary_plot(shap_values, X_test, feature_names=X.columns)
-st.pyplot(plt)
+# Use a proper Matplotlib figure to avoid the error
+fig, ax = plt.subplots(figsize=(10, 6))
+shap.summary_plot(shap_values, X_test, feature_names=X.columns, show=False)
+st.pyplot(fig)
 
 # ---------------------------- STEP 6: Deploy Simple Prediction UI ----------------------------
 st.subheader("Make a Prediction")
